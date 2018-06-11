@@ -10,6 +10,10 @@ function Planet(radius, density, position) {
   });
 
   THREE.Mesh.call(this, g, mat);
+
+  Object.assign(this, {
+    velocity: new THREE.Vector3(0, 0, 0),
+  });
 }
 Planet.prototype = Object.create(THREE.Mesh.prototype);
 
@@ -19,7 +23,7 @@ function Application(selector, width, height) {
   renderer.setSize(width, height);
   renderer.setPixelRatio(window.devicePixelRatio);
   var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera();
+  var camera = new THREE.PerspectiveCamera(45, width/height);
   camera.position.z = 50;
 
   function render() {
