@@ -1,5 +1,22 @@
 const G = 1;
 
+const getCenterOfGravity = (function getCenterOfGravity() {
+  let tmp = new THREE.Vector3();
+  return function getCenterOfGravity(planets, optionalTarget) {
+    let result = optionalTarget || new THREE.Vector3();
+    let totalMass = 0;
+    tmp.set(0, 0, 0);
+    planets.forEach(function(p) {
+      tmp.copy(p.position).multiplyScalar(p.mass);
+      totalMass += p.mass;
+      result.add(tmp);
+    });
+    result.multiplyScalar(1/totalMass);
+
+    return result;
+  }
+})();
+
 const calcGravity = (function setupCalcGravity() {
   let dir = new THREE.Vector3();
   let Fg = new THREE.Vector3();
@@ -54,7 +71,7 @@ function Planet(radius, density, position) {
 
   Object.assign(this, {
     force: new THREE.Vector3(0, 0, 0),
-    velocity: new THREE.Vector3(-1, 0, 0),
+    velocity: new THREE.Vector3(0, 0, 0),
     mass: mass,
     radius: radius,
   });
@@ -92,6 +109,7 @@ function Application(selector, width, height) {
   planets.push(new Planet());
   planets.push(new Planet());
   planets[1].position.set(10, 10, 10);
+  planets[1].velocity.set(-1, 0, 0);
   planets.forEach(function(p) {
     scene.add(p);
   });
@@ -105,11 +123,17 @@ function Application(selector, width, height) {
   });
 };
 
+let centerOfGravity = new THREE.Vector3();
+let cameraGoalPos = new THREE.Vector3();
 Application.prototype.update = function(dt) {
   updateForces(this.planets);
   this.planets.forEach(function(p) {
     p.update(dt);
   });
+  getCenterOfGravity(this.planets, centerOfGravity);
+  cameraGoalPos.copy(centerOfGravity);
+  cameraGoalPos.z += 50;
+  app.camera.position.lerp(cameraGoalPos, 0.1);
 };
 
 function update() {
