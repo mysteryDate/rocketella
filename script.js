@@ -1,4 +1,5 @@
 const G = 1;
+const CAMERA_DISTANCE = 20;
 
 const getCenterOfGravity = (function getCenterOfGravity() {
   let tmp = new THREE.Vector3();
@@ -55,8 +56,8 @@ const updateForces = (function setupUpdateForces() {
   }
 })();
 
-function Planet(radius, density, position) {
-  position = (position !== undefined) ? position : new THREE.Vector3(0, 0, 0);
+
+function Planet(radius, density) {
   density = (density !== undefined) ? density : 1;
   radius = (radius !== undefined) ? radius : 1;
   const mass = 4/3 * Math.PI * (radius ** 3) * density;
@@ -92,6 +93,10 @@ Planet.prototype.update = (function() {
   };
 })();
 
+class Rocket extends Planet {
+  // this.direction = 0;
+}
+
 function Application(selector, width, height) {
   const canvas = document.querySelector(selector);
   const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
@@ -99,7 +104,7 @@ function Application(selector, width, height) {
   renderer.setPixelRatio(window.devicePixelRatio);
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, width/height);
-  camera.position.z = 50;
+  camera.position.z = CAMERA_DISTANCE;
 
   function render() {
     renderer.render(scene, camera);
@@ -107,9 +112,9 @@ function Application(selector, width, height) {
 
   planets = [];
   planets.push(new Planet());
-  planets.push(new Planet());
-  planets[1].position.set(10, 10, 10);
-  planets[1].velocity.set(-1, 0, 0);
+  planets.push(new Planet(0.1, 0.1));
+  planets[1].position.set(0, 5, 0);
+  planets[1].velocity.set(-0.8, 0, 0);
   planets.forEach(function(p) {
     scene.add(p);
   });
@@ -132,12 +137,28 @@ Application.prototype.update = function(dt) {
   });
   getCenterOfGravity(this.planets, centerOfGravity);
   cameraGoalPos.copy(centerOfGravity);
-  cameraGoalPos.z += 50;
+  cameraGoalPos.z += CAMERA_DISTANCE;
   app.camera.position.lerp(cameraGoalPos, 0.1);
 };
 
+function onDocumentKeyDown(event) {
+  switch (event.code) {
+    case "ArrowUp":
+      break;
+    case "ArrowDown":
+      break;
+    case "ArrowRight":
+      break;
+    case "ArrowLeft":
+      break;
+    default:
+      break;
+  }
+}
+document.addEventListener("keydown", onDocumentKeyDown, false);
+
 function update() {
-  window.app.update(1.0);
+  window.app.update(0.1);
   window.app.render();
   requestAnimationFrame(update);
 }
