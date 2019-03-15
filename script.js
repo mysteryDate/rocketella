@@ -1,3 +1,4 @@
+"use strict";
 const G = 1;
 const CAMERA_DISTANCE = 20;
 
@@ -93,9 +94,37 @@ Planet.prototype.update = (function() {
   };
 })();
 
-class Rocket extends Planet {
-  // this.direction = 0;
+function Rocket(radius) {
+  const mass = 0.001;
+  const g = new THREE.TetrahedronBufferGeometry(radius, 0);
+  const mat = new THREE.MeshPhongMaterial({
+    color: "green",
+  });
+
+  THREE.Mesh.call(this, g, mat);
+
+  Object.assign(this, {
+    force: new THREE.Vector3(0, 0, 0),
+    velocity: new THREE.Vector3(0, 0, 0),
+    mass: mass,
+  });
 }
+Rocket.prototype = Object.create(THREE.Mesh.prototype);
+
+Rocket.prototype.update = (function() {
+  let a = new THREE.Vector3();
+  let dv = new THREE.Vector3();
+  let dp = new THREE.Vector3();
+
+  return function update(dt) {
+    a.copy(this.force).multiplyScalar(1/this.mass);
+    dv.copy(a).multiplyScalar(dt);
+    this.velocity.add(dv);
+    dp.copy(this.velocity).multiplyScalar(dt);
+    this.position.add(dp);
+  };
+})();
+
 
 function Application(selector, width, height) {
   const canvas = document.querySelector(selector);
@@ -110,7 +139,7 @@ function Application(selector, width, height) {
     renderer.render(scene, camera);
   }
 
-  planets = [];
+  let planets = [];
   planets.push(new Planet());
   planets.push(new Planet(0.1, 0.1));
   planets[1].position.set(0, 5, 0);
@@ -119,12 +148,23 @@ function Application(selector, width, height) {
     scene.add(p);
   });
 
+  let rocket = new Rocket(0.5);
+  rocket.position.set(1, -5, 0);
+  rocket.velocity.set(0.9, 0, 0);
+  scene.add(rocket);
+  planets.push(rocket);
+
+  let sun = new THREE.DirectionalLight();
+  sun.position.copy(camera.position);
+  scene.add(sun);
+
   Object.assign(this, {
     canvas: canvas,
     camera: camera,
     scene: scene,
     render: render,
     planets: planets,
+    rocket: rocket,
   });
 };
 
@@ -135,6 +175,7 @@ Application.prototype.update = function(dt) {
   this.planets.forEach(function(p) {
     p.update(dt);
   });
+  this.rocket.update(dt);
   getCenterOfGravity(this.planets, centerOfGravity);
   cameraGoalPos.copy(centerOfGravity);
   cameraGoalPos.z += CAMERA_DISTANCE;
@@ -144,6 +185,8 @@ Application.prototype.update = function(dt) {
 function onDocumentKeyDown(event) {
   switch (event.code) {
     case "ArrowUp":
+      app.rocket.force.y += 0.1;
+      console.log("hi")
       break;
     case "ArrowDown":
       break;
